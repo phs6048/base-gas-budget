@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Base 배포 전, 가스비와 예산을 계산하세요. 지갑 연결 없이 읽기 전용 RPC로 gas 가격을 조회합니다.">
+  <meta name="color-scheme" content="dark">
+  <title>Base Gas Desk — 배포 예산 계산기</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%230050ff'/%3E%3Cpath d='M10 20h20' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css"><script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <header><a class="brand" href="./"><span class="mark" aria-hidden="true">━</span> Gas Desk <span class="brand-tag">ON BASE</span></a><span class="read-only"><i></i> 지갑 연결 없이 사용</span></header>
+    <main>
+      <section class="hero"><p class="eyebrow">PLAN FIRST. BUILD NEXT.</p><h1>배포하기 전에,<br><span>예산부터 가볍게.</span></h1><p class="intro">gas 가격부터 남겨둘 ETH까지.<br>Base에서 다음 배포에 필요한 비용을 한눈에 확인하세요.</p></section>
+      <div class="workspace">
+        <section class="panel inputs" aria-labelledby="input-title">
+          <div class="panel-heading"><div><p class="eyebrow">01 / YOUR INPUTS</p><h2 id="input-title">배포 계획</h2></div><span class="pill">BASE MAINNET</span></div>
+          <div class="notice">지금 보이는 값은 <strong>계산 예시</strong>입니다. 실제 배포 견적이 아니며, L1·운영 수수료는 별도로 입력해야 합니다.</div>
+          <form id="calculator" novalidate>
+            <fieldset><legend>얼마를 사용할까요?</legend><div class="fields">
+              <label for="budget">총 예산 <span>ETH</span><input id="budget" name="budget" inputmode="decimal" value="0.00061" required></label>
+              <label for="reserve">남겨둘 잔액 <span>ETH</span><input id="reserve" name="reserve" inputmode="decimal" value="0.0001" required></label>
+            </div></fieldset>
+            <fieldset><legend>한 번의 배포 비용</legend><div class="fields">
+              <label for="gas">예상 gas 사용량 <span>GAS</span><input id="gas" name="gas" inputmode="numeric" value="200000" required><small>Remix·지갑의 배포 예상 사용량</small></label>
+              <label for="price">gas 가격 <span>GWEI</span><input id="price" name="price" inputmode="decimal" value="0.005" required><small>기본 수수료 + 우선 수수료</small></label>
+            </div><div class="rpc-row"><button type="button" id="refresh" class="secondary">↻ 현재 gas 가격 조회</button><span id="rpc-status" role="status">수동 입력 모드</span></div>
+            <div class="fields extras">
+              <label for="l1">L1 데이터 수수료 <span>ETH / 건</span><input id="l1" name="l1" inputmode="decimal" value="0.000001" required></label>
+              <label for="operator">운영 수수료 <span>ETH / 건</span><input id="operator" name="operator" inputmode="decimal" value="0" required></label>
+              <label for="value">배포 시 보내는 금액 <span>ETH / 건</span><input id="value" name="value" inputmode="decimal" value="0" required></label>
+              <label for="margin">수수료 여유 비율 <span>%</span><input id="margin" name="margin" inputmode="decimal" value="30" required></label>
+            </div></fieldset>
+            <fieldset class="last"><legend>몇 번 배포할까요?</legend><div class="target-row"><label for="count" class="sr-only">목표 배포 횟수</label><input id="count" name="count" inputmode="numeric" value="7" required><span>건</span><div class="presets" aria-label="목표 횟수 예시"><button type="button" data-count="1">1건</button><button type="button" data-count="2">2건</button><button type="button" data-count="7">7건</button></div></div></fieldset>
+          </form>
+          <p id="error" class="error" role="alert" hidden></p>
+        </section>
+        <aside class="results" aria-label="계산 결과">
+          <section class="result-main" aria-labelledby="result-title"><p class="eyebrow">02 / YOUR ESTIMATE</p><h2 id="result-title">계획한 배포의 예상 비용</h2><div class="total"><span id="total">—</span><span class="unit">ETH</span></div><div id="verdict" class="verdict" role="status">입력값을 확인해 주세요</div><div class="result-divider"></div><dl class="summary"><div><dt>보유 예산으로 가능한 횟수</dt><dd><span id="capacity">—</span><small> 건</small></dd></div><div><dt>목표 배포 후 남는 잔액</dt><dd><span id="remaining">—</span><small> ETH</small></dd></div></dl><p class="result-note">입력한 동일 비용이 매번 적용된다는 가정입니다.<br>예비 잔액을 제외하고 수수료 여유분을 포함합니다.</p></section>
+          <section class="panel breakdown"><h2>한 건의 비용 구성</h2><div id="fee-bar" class="fee-bar" aria-hidden="true"><i></i><i></i><i></i></div><dl><div><dt><i class="dot execution"></i>L2 실행 비용</dt><dd id="execution">—</dd></div><div><dt><i class="dot l1"></i>L1 + 운영 수수료</dt><dd id="other">—</dd></div><div><dt><i class="dot buffer"></i>수수료 여유분</dt><dd id="buffer">—</dd></div><div class="per-total"><dt>건당 합계 <small>보내는 ETH 포함</small></dt><dd id="per-deployment">—</dd></div></dl><button id="export" type="button" class="export">계산 내역 저장 <span aria-hidden="true">↗</span></button></section>
+          <p class="footnote">실제 수수료는 네트워크 상황과 컨트랙트에 따라 달라집니다. 전송 전 지갑의 최종 견적을 확인하세요.</p>
+        </aside>
+      </div>
+      <section class="how"><div><p class="eyebrow">THE MATH, WITHOUT THE MYSTERY</p><h2>작은 숫자도, 빠뜨리지 않도록.</h2></div><p>예상 수수료 = gas 사용량 × gas 가격 + L1 데이터 비용 + 운영 수수료. 여기에 설정한 여유 비율을 더하고, 배포 시 보내는 ETH를 합산합니다. 수수료는 wei 정수 단위로 계산합니다.</p><a href="https://docs.base.org/specifications/transactions/network-fees" target="_blank" rel="noopener noreferrer">Base 수수료 문서 ↗</a></section>
+    </main>
+    <footer><span>Base Gas Desk · 독립적인 오픈소스 도구</span><span>지갑 서명 · 자산 전송 기능 없음</span></footer>
+  </div>
+</body>
+</html>

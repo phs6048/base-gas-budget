@@ -1,0 +1,9 @@
+{
+  "name": "base-gas-budget",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only Base gas and deployment budget calculator",
+  "scripts": { "test": "node --test" },
+  "engines": { "node": ">=20" }
+}
